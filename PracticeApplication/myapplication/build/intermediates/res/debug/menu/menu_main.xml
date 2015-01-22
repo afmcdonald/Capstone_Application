@@ -4,4 +4,4 @@
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
 </menu>
-<!-- From: file:/C:/Users/Aidan/Documents/GitHub/Capstone_Application/PracticeApplication/myapplication/src/main/res/menu/menu_main.xml -->
+<!-- From: file:/Users/darrenchu/Documents/Compsci/workspace/Capstone_Application/PracticeApplication/myapplication/src/main/res/menu/menu_main.xml -->
