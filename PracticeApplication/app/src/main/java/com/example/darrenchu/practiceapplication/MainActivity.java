@@ -36,4 +36,10 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    public int forkingMethod()
+    {
+        int x = 5;
+        return x;
+    }
 }
