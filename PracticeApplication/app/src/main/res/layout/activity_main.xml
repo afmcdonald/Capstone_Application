@@ -13,8 +13,7 @@
         android:id="@+id/textView"
         android:layout_below="@+id/view"
         android:layout_alignRight="@+id/radioButton"
-        android:layout_alignEnd="@+id/radioButton"
-        android:layout_alignBottom="@+id/view" />
+        android:layout_alignEnd="@+id/radioButton" />
 =======
     <RadioButton
         android:layout_width="wrap_content"
@@ -24,5 +23,16 @@
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
->>>>>>> FETCH_HEAD
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="More Stuff For Practice"
+        android:id="@+id/textView2"
+        android:layout_above="@+id/radioButton"
+        android:layout_alignLeft="@+id/textView"
+        android:layout_alignStart="@+id/textView"
+        android:layout_marginBottom="78dp" />
+    >>>>>>> FETCH_HEAD
 </RelativeLayout>
