@@ -39,7 +39,7 @@ public class MainActivity extends ActionBarActivity {
 
     public int forkingMethod()
     {
-        int x = 5;
+        int x = "hello";
         return x;
     }
 }
