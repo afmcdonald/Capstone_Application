@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -57,8 +58,11 @@ public class DisplayItem extends ActionBarActivity {
         TextView description = (TextView) findViewById(R.id.selectDescription);
         description.setText(itemDescription);
 
-        Button callButton = (Button)findViewById(R.id.callButton);
-        final Uri phoneNumber = Uri.parse("tel:" + "6502552754");
+        Button callButton = (Button) findViewById(R.id.callButton);
+        String phone = intent.getStringExtra("phone");
+        final Uri phoneNumber = Uri.parse("tel:" + phone);
+
+
         callButton.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View v) {
@@ -70,6 +74,14 @@ public class DisplayItem extends ActionBarActivity {
                     Log.e("Calling a Phone Number", "Call failed", activityException);
                 }
             }
+        });
+
+        Button textButton = (Button) findViewById(R.id.textButton);
+
+        textButton.setOnClickListener((v) -> {
+
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(phone, null, "SMS text", null, null);
         });
 
     }

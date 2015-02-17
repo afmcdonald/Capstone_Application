@@ -1,8 +1,10 @@
 package com.example.aidan.contactmanager;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.ContextMenu;
@@ -173,14 +175,18 @@ public class MainActivity extends ActionBarActivity {
                 String price = viewContact.getPrice();
                 String keywords = viewContact.getKeywords();
                 String description = viewContact.getDescription();
+
                 Uri image = viewContact.getImageURI();
 
                 Intent intent = new Intent(this,DisplayItem.class);
+                TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+                String mPhoneNumber = tMgr.getLine1Number();
                 intent.putExtra("image", image.toString());
                 intent.putExtra("title", title);
                 intent.putExtra("price", price);
                 intent.putExtra("keywords", keywords);
                 intent.putExtra("description", description);
+                intent.putExtra("phone", mPhoneNumber);
 
                 startActivity(intent);
 
