@@ -2,6 +2,8 @@ package com.example.aidan.contactmanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
@@ -36,16 +38,19 @@ public class MainActivity extends ActionBarActivity {
 
     EditText title, price, keywords, description;
     ImageView itemImage;
-    List<Contact> Contacts = new ArrayList<Contact>();
-    ListView contactListView;
+    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
+    ListView postedItemListView;
     Uri imageUri = Uri.parse("android.resource://com.example.aidan.contactmanager/drawable/add_icon.png");
     DatabaseHandler dbHandler;
     int longClickedItemIndex;
-    ArrayAdapter<Contact> contactAdapter;
+    ArrayAdapter<PostedItem> postedItemAdapter;
 
     Button upload;
     private static final int CAMERA_REQUEST = 1888;
     private ImageView imageView;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,17 +60,38 @@ public class MainActivity extends ActionBarActivity {
         price = (EditText) findViewById(R.id.itemPrice);
         keywords = (EditText) findViewById(R.id.itemKeywords);
         description = (EditText) findViewById(R.id.itemDescription);
-        contactListView = (ListView) findViewById(R.id.listView);
+        postedItemListView = (ListView) findViewById(R.id.itemView);
         itemImage = (ImageView) findViewById(R.id.addImage);
         dbHandler = new DatabaseHandler(getApplicationContext());
 
-        registerForContextMenu(contactListView);
 
-        contactListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+        registerForContextMenu(postedItemListView);
+
+        postedItemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 longClickedItemIndex = position;
-                return false;
+                PostedItem viewPostedItem = PostedItems.get(longClickedItemIndex);
+
+                String title = viewPostedItem.getTitle();
+                String price = viewPostedItem.getPrice();
+                String keywords = viewPostedItem.getKeywords();
+                String description = viewPostedItem.getDescription();
+
+                Uri image = viewPostedItem.getImageURI();
+
+                Intent intent = new Intent(view.getContext(),DisplayItem.class);
+                TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+                String mPhoneNumber = tMgr.getLine1Number();
+                intent.putExtra("image", image.toString());
+                intent.putExtra("title", title);
+                intent.putExtra("price", price);
+                intent.putExtra("keywords", keywords);
+                intent.putExtra("description", description);
+                intent.putExtra("phone", mPhoneNumber);
+
+                startActivity(intent);
             }
         });
 
@@ -74,25 +100,25 @@ public class MainActivity extends ActionBarActivity {
         tabHost.setup();
 
         TabHost.TabSpec tabSpec = tabHost.newTabSpec("creator");
-        tabSpec.setContent(R.id.sellItem);
-        tabSpec.setIndicator("Creator");
+        tabSpec.setContent(R.id.sellTab);
+        tabSpec.setIndicator("SELL");
         tabHost.addTab(tabSpec);
 
         tabSpec = tabHost.newTabSpec("list");
-        tabSpec.setContent(R.id.tabContactList);
-        tabSpec.setIndicator("List");
+        tabSpec.setContent(R.id.buyTab);
+        tabSpec.setIndicator("BUY");
         tabHost.addTab(tabSpec);
 
         final Button addBtn = (Button) findViewById(R.id.btnAdd);
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) { //displays pop up with contact created
-                Contact contact = new Contact(dbHandler.getContactsCount(), String.valueOf(title.getText()), String.valueOf(price.getText()),String.valueOf(keywords.getText()), String.valueOf(description.getText()), imageUri );
-                if(!contactExists(contact)) {
-                    dbHandler.createContact(contact);
-                    Contacts.add(contact);
-                    contactAdapter.notifyDataSetChanged();
-                    Toast.makeText(getApplicationContext(), String.valueOf(title.getText()) +" has been added to your Contacts!", Toast.LENGTH_SHORT).show();
+            public void onClick(View view) { //displays pop up with postedItem created
+                PostedItem postedItem = new PostedItem(dbHandler.getPostedItemCount(), String.valueOf(title.getText()), String.valueOf(price.getText()),String.valueOf(keywords.getText()), String.valueOf(description.getText()), imageUri );
+                if(!postedItemExists(postedItem)) {
+                    dbHandler.createPostedItem(postedItem);
+                    PostedItems.add(postedItem);
+                    postedItemAdapter.notifyDataSetChanged();
+                    Toast.makeText(getApplicationContext(), String.valueOf(title.getText()) +" has been added to your PostedItems!", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 Toast.makeText(getApplicationContext(), String.valueOf(title.getText()) + " already exists. Please use a different name.", Toast.LENGTH_SHORT).show();
@@ -122,7 +148,7 @@ public class MainActivity extends ActionBarActivity {
                 Intent intent = new Intent();
                 intent.setType("image/*");//like sending email or something or pick images
                 intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Contact Image"), 1);
+                startActivityForResult(Intent.createChooser(intent, "Select Item Image"), 1);
             }
         });
 
@@ -133,10 +159,9 @@ public class MainActivity extends ActionBarActivity {
         upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-//                intent.setType("image/*");//like sending email or something or pick images
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(intent, CAMERA_REQUEST);
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
             }
 
         });
@@ -144,8 +169,8 @@ public class MainActivity extends ActionBarActivity {
 
 
 
-        if (dbHandler.getContactsCount()!= 0)
-            Contacts.addAll(dbHandler.getAllContacts());
+        if (dbHandler.getPostedItemCount()!= 0)
+            PostedItems.addAll(dbHandler.getAllPostedItems());
 
 
         populateList();
@@ -157,56 +182,13 @@ public class MainActivity extends ActionBarActivity {
         startActivity(intent);
     }
 
-    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo){
-        super.onCreateContextMenu(menu, view, menuInfo);
 
-        menu.setHeaderIcon(R.drawable.pencil_icon);
-        menu.setHeaderTitle("Contact Options");
-        menu.add(Menu.NONE, VIEWITEM, menu.NONE, "View Contact");
-        menu.add(Menu.NONE, DELETE, menu.NONE, "Delete Contact");
-    }
-
-    public boolean onContextItemSelected(MenuItem item){
-        switch(item.getItemId()){
-            case VIEWITEM:
-                Contact viewContact = Contacts.get(longClickedItemIndex);
-
-                String title = viewContact.getTitle();
-                String price = viewContact.getPrice();
-                String keywords = viewContact.getKeywords();
-                String description = viewContact.getDescription();
-
-                Uri image = viewContact.getImageURI();
-
-                Intent intent = new Intent(this,DisplayItem.class);
-                TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-                String mPhoneNumber = tMgr.getLine1Number();
-                intent.putExtra("image", image.toString());
-                intent.putExtra("title", title);
-                intent.putExtra("price", price);
-                intent.putExtra("keywords", keywords);
-                intent.putExtra("description", description);
-                intent.putExtra("phone", mPhoneNumber);
-
-                startActivity(intent);
-
-                break;
-            case DELETE:
-                dbHandler.deleteContact(Contacts.get(longClickedItemIndex));
-                Contacts.remove(longClickedItemIndex);
-                contactAdapter.notifyDataSetChanged();
-                break;
-        }
-
-        return super.onContextItemSelected(item);
-    }
-
-    private boolean contactExists(Contact contact){
-        String name = contact.getTitle();
-        int contactCount = Contacts.size();
+    private boolean postedItemExists(PostedItem postedItem){
+        String name = postedItem.getTitle();
+        int contactCount = PostedItems.size();
 
         for (int i = 0; i < contactCount; i++){
-            if(name.compareToIgnoreCase(Contacts.get(i).getTitle())==0){//0 if match
+            if(name.compareToIgnoreCase(PostedItems.get(i).getTitle())==0){//0 if match
                 return true;
             }
         }
@@ -220,22 +202,22 @@ public class MainActivity extends ActionBarActivity {
                 itemImage.setImageURI(data.getData());
             }
             if (reqCode == CAMERA_REQUEST){
-                imageUri = (Uri) data.getData();
-                itemImage.setImageURI(data.getData());
+                Bitmap photo = (Bitmap) data.getExtras().get("data");
+                itemImage.setImageBitmap(photo);
             }
 
         }
     }
 
     private void populateList() {
-        contactAdapter = new ContactListAdapter();
-        contactListView.setAdapter(contactAdapter);//what is this adapter?
+        postedItemAdapter = new PostedItemListAdapter();
+        postedItemListView.setAdapter(postedItemAdapter);//what is this adapter?
     }
 
 
-    private class ContactListAdapter extends ArrayAdapter<Contact>{ //Here's the list
-        public ContactListAdapter(){
-            super(MainActivity.this, R.layout.listview_item, Contacts);
+    private class PostedItemListAdapter extends ArrayAdapter<PostedItem>{ //Here's the list
+        public PostedItemListAdapter(){
+            super(MainActivity.this, R.layout.listview_item, PostedItems);
         }
 
         @Override
@@ -243,44 +225,90 @@ public class MainActivity extends ActionBarActivity {
             if(view == null)//what does this inflater do?
                 view = getLayoutInflater().inflate(R.layout.listview_item, parent, false);
 
-            Contact currentContact = Contacts.get(position);
+            PostedItem currentpostedItem = PostedItems.get(position);
 
             //TextView tempId = (TextView) view.findViewById(R.id.buyId);
             //tempId.setText(Integer.toString(currentContact.getId()));
             TextView name = (TextView) view.findViewById(R.id.buyTitle);
-            name.setText(currentContact.getTitle());
+            name.setText(currentpostedItem.getTitle());
             TextView phone = (TextView) view.findViewById(R.id.buyPrice);
-            phone.setText(currentContact.getPrice());
+            phone.setText(currentpostedItem.getPrice());
             TextView email = (TextView) view.findViewById(R.id.buyKeywords);
-            email.setText(currentContact.getKeywords());
+            email.setText(currentpostedItem.getKeywords());
             TextView address = (TextView) view.findViewById(R.id.buyDescription);
-            address.setText(currentContact.getDescription());
-            ImageView ivContactImage = (ImageView) view.findViewById(R.id.ivContactImage);
-            ivContactImage.setImageURI(currentContact.getImageURI());
+            address.setText(currentpostedItem.getDescription());
+            ImageView ivPostedItemImage = (ImageView) view.findViewById(R.id.ivContactImage);
+            ivPostedItemImage.setImageURI(currentpostedItem.getImageURI());
 
             return view;
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_main, menu);
+//        return true;
+//    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+    //    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo){
+//        super.onCreateContextMenu(menu, view, menuInfo);
+//
+//        menu.setHeaderIcon(R.drawable.pencil_icon);
+//        menu.setHeaderTitle("Item Options");
+//        menu.add(Menu.NONE, VIEWITEM, menu.NONE, "View Item");
+//        menu.add(Menu.NONE, DELETE, menu.NONE, "Delete Item");
+//    }
 
-        return super.onOptionsItemSelected(item);
-    }
+
+
+//    public boolean onContextItemSelected(MenuItem item){
+//        switch(item.getItemId()){
+//            case VIEWITEM:
+//                Item viewPostedItem = PostedItems.get(longClickedItemIndex);
+//
+//                String title = viewPostedItem.getTitle();
+//                String price = viewPostedItem.getPrice();
+//                String keywords = viewPostedItem.getKeywords();
+//                String description = viewPostedItem.getDescription();
+//
+//
+//                Intent intent = new Intent(this,DisplayItem.class);
+//                TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+//                String mPhoneNumber = tMgr.getLine1Number();
+//                intent.putExtra("image", image.toString());
+//                intent.putExtra("title", title);
+//                intent.putExtra("price", price);
+//                intent.putExtra("keywords", keywords);
+//                intent.putExtra("description", description);
+//                intent.putExtra("phone", mPhoneNumber);
+//
+//                startActivity(intent);
+//
+//                break;
+//            case DELETE:
+//                dbHandler.deleteContact(PostedItems.get(longClickedItemIndex));
+//                PostedItems.remove(longClickedItemIndex);
+//                contactAdapter.notifyDataSetChanged();
+//                break;
+//        }
+//
+//        return super.onContextItemSelected(item);
+//    }
+
 }

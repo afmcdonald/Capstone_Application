@@ -5,15 +5,15 @@ import android.net.Uri;
 import java.net.URI;
 
 /**
- * Created by Aidan on 1/29/2015.
+ * Created by Aidan on 2/17/2015.
  */
-public class Contact {
+public class PostedItem {
 
     private String _title, _price, _keywords, _description;
     private Uri _imageUri;
     private int _id;
 
-    public Contact(int id, String title, String price, String keywords, String description, Uri imageUri) {
+    public PostedItem(int id, String title, String price, String keywords, String description, Uri imageUri) {
         _id = id;
         _title = title;
         _price = price;
@@ -46,3 +46,4 @@ public class Contact {
         return _description;
     }
 }
+

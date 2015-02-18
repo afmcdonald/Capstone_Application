@@ -17,8 +17,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
 
-    private static final String DATABASE_TITLE = "contactManager",
-    TABLE_CONTACTS = "contacts",
+    private static final String DATABASE_TITLE = "postedItemManager",
+    TABLE_POSTEDITEM = "posteditem",
     KEY_ID = "id",
     KEY_TITLE = "title",
     KEY_PRICE = "price",
@@ -32,55 +32,55 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db){
-        db.execSQL("CREATE TABLE " + TABLE_CONTACTS + "(" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TITLE+ " TEXT," + KEY_PRICE + " TEXT," + KEY_KEYWORDS+ " TEXT," + KEY_DESCRIPTION + " TEXT," + KEY_IMAGEURI + " TEXT)");
+        db.execSQL("CREATE TABLE " + TABLE_POSTEDITEM + "(" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TITLE+ " TEXT," + KEY_PRICE + " TEXT," + KEY_KEYWORDS+ " TEXT," + KEY_DESCRIPTION + " TEXT," + KEY_IMAGEURI + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACTS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_POSTEDITEM);
         onCreate(db);
     }
 
-    public void createContact(Contact contact){
+    public void createPostedItem(PostedItem postedItem){
         SQLiteDatabase db = getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(KEY_TITLE, contact.getTitle());
-        values.put(KEY_PRICE, contact.getPrice());
-        values.put(KEY_KEYWORDS, contact.getKeywords());
-        values.put(KEY_DESCRIPTION, contact.getDescription());
-        values.put(KEY_IMAGEURI, contact.getImageURI().toString());
+        values.put(KEY_TITLE, postedItem.getTitle());
+        values.put(KEY_PRICE, postedItem.getPrice());
+        values.put(KEY_KEYWORDS, postedItem.getKeywords());
+        values.put(KEY_DESCRIPTION, postedItem.getDescription());
+        values.put(KEY_IMAGEURI, postedItem.getImageURI().toString());
 
-        db.insert(TABLE_CONTACTS, null, values);
+        db.insert(TABLE_POSTEDITEM, null, values);
         db.close();
 
     }
 
-    public Contact getContact(int id) {//reading one contact
+    public PostedItem getPostedItem(int id) {//reading one postedItem
         SQLiteDatabase db = getReadableDatabase();
 
-        Cursor cursor = db.query(TABLE_CONTACTS, new String[] {KEY_ID, KEY_TITLE, KEY_PRICE, KEY_KEYWORDS, KEY_DESCRIPTION, KEY_IMAGEURI}, KEY_ID + "=?", new String[] {String.valueOf(id) }, null, null, null, null);
+        Cursor cursor = db.query(TABLE_POSTEDITEM, new String[] {KEY_ID, KEY_TITLE, KEY_PRICE, KEY_KEYWORDS, KEY_DESCRIPTION, KEY_IMAGEURI}, KEY_ID + "=?", new String[] {String.valueOf(id) }, null, null, null, null);
 
         if (cursor != null)
             cursor.moveToFirst();
 
         //get the key id
-        Contact contact = new Contact(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), Uri.parse(cursor.getString(5)));
+        PostedItem postedItem = new PostedItem(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), Uri.parse(cursor.getString(5)));
         db.close();
         cursor.close();
-        return contact;
+        return postedItem;
     }
 
-    public void deleteContact(Contact contact){
+    public void deletePostedItem(PostedItem postedItem){
         SQLiteDatabase db = getWritableDatabase();
-        db.delete(TABLE_CONTACTS, KEY_ID + "=?", new String[] {String.valueOf(contact.getId())});
+        db.delete(TABLE_POSTEDITEM, KEY_ID + "=?", new String[] {String.valueOf(postedItem.getId())});
         db.close();
     }
 
-    public int getContactsCount(){
+    public int getPostedItemCount(){
         //EX: SELECT * FROM CONTACTS
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);//second parameter is selection args (not needed)
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_POSTEDITEM, null);//second parameter is selection args (not needed)
         int count = cursor.getCount();
         db.close();
         cursor.close();
@@ -90,37 +90,37 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     }
 
-    public int updateContact(Contact contact){
+    public int updatePostedItem(PostedItem postedItem){
         SQLiteDatabase db = getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(KEY_TITLE, contact.getTitle());
-        values.put(KEY_PRICE, contact.getPrice());
-        values.put(KEY_KEYWORDS, contact.getKeywords());
-        values.put(KEY_DESCRIPTION, contact.getDescription());
-        values.put(KEY_IMAGEURI, contact.getImageURI().toString());
+        values.put(KEY_TITLE, postedItem.getTitle());
+        values.put(KEY_PRICE, postedItem.getPrice());
+        values.put(KEY_KEYWORDS, postedItem.getKeywords());
+        values.put(KEY_DESCRIPTION, postedItem.getDescription());
+        values.put(KEY_IMAGEURI, postedItem.getImageURI().toString());
 
-        int rowsAffected = db.update(TABLE_CONTACTS, values, KEY_ID + "=?", new String[] {String.valueOf(contact.getId())});//how many rows were affected
+        int rowsAffected = db.update(TABLE_POSTEDITEM, values, KEY_ID + "=?", new String[] {String.valueOf(postedItem.getId())});//how many rows were affected
         db.close();
         return rowsAffected;
     }
 
-    public List<Contact> getAllContacts(){
-        List<Contact> contacts = new ArrayList<Contact>();
+    public List<PostedItem> getAllPostedItems(){
+        List<PostedItem> postedItems = new ArrayList<PostedItem>();
 
         SQLiteDatabase db = getWritableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_POSTEDITEM, null);
 
         if (cursor.moveToFirst()){
-            Contact contact;
+            //PostedItem postedItem;
             do {
-                contacts.add(new Contact(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), Uri.parse(cursor.getString(5)))); //add it to the list
+                postedItems.add(new PostedItem(Integer.parseInt(cursor.getString(0)), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4), Uri.parse(cursor.getString(5)))); //add it to the list
 
             }
             while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
-        return contacts;
+        return postedItems;
     }
 }

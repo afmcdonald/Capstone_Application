@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,9 +26,10 @@ import java.util.List;
 
 //extends
 public class DisplayItem extends ActionBarActivity {
+    EditText message;
+    Button sendMsg;
 
-
-    List<Contact> Contacts = new ArrayList<Contact>();
+    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +37,10 @@ public class DisplayItem extends ActionBarActivity {
 
 
         Intent intent = getIntent();//get the data passed to this activity
+        message = (EditText) findViewById(R.id.messageText);
+        message.setVisibility(View.GONE);
+        sendMsg = (Button) findViewById(R.id.sendButton);
+        sendMsg.setVisibility(View.GONE);
 
         //String phoneNumber =
 
@@ -59,7 +65,7 @@ public class DisplayItem extends ActionBarActivity {
         description.setText(itemDescription);
 
         Button callButton = (Button) findViewById(R.id.callButton);
-        String phone = intent.getStringExtra("phone");
+        final String phone = intent.getStringExtra("phone");
         final Uri phoneNumber = Uri.parse("tel:" + phone);
 
 
@@ -76,12 +82,24 @@ public class DisplayItem extends ActionBarActivity {
             }
         });
 
-        Button textButton = (Button) findViewById(R.id.textButton);
+        final Button textButton = (Button) findViewById(R.id.textButton);
 
-        textButton.setOnClickListener((v) -> {
+        textButton.setOnClickListener(new View.OnClickListener(){
+        public void onClick(View view) {
 
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phone, null, "SMS text", null, null);
+            //get rid of text, show textbox and send
+            textButton.setVisibility(View.GONE);
+            message.setVisibility(View.VISIBLE);
+            sendMsg.setVisibility(View.VISIBLE);
+
+        }
+        });
+        sendMsg.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                String txtMsg = String.valueOf(message.getText());
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(phone, null, txtMsg, null, null);
+            }
         });
 
     }

@@ -30,7 +30,7 @@
                 android:layout_height="fill_parent">
 
                 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/ScrollView01"
+                    android:id="@+id/sellTab"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent" >
                     <LinearLayout
@@ -103,8 +103,9 @@
                             android:enabled="false" />
                     </LinearLayout>
                 </ScrollView>
+
                 <LinearLayout
-                    android:id="@+id/tabContactList"
+                    android:id="@+id/buyTab"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
                     android:orientation="vertical">
@@ -112,7 +113,7 @@
                     <ListView
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:id="@+id/listView"
+                        android:id="@+id/itemView"
                         android:layout_gravity="center_horizontal" />
                 </LinearLayout>
 
