@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.SmsManager;
@@ -21,141 +22,59 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
 //extends
 public class DisplayItem extends ActionBarActivity {
-    EditText message;
-    Button sendMsg;
+    private int tailNo;
+    private TextView make;
+    private TextView model;
 
-    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_item);
 
+        this.tailNo = Integer.parseInt(getIntent().getStringExtra("TailNumber"));
+        this.make = (TextView) this.findViewById(R.id.planeMake);
+        this.model = (TextView) this.findViewById(R.id.planeModel);
 
-        Intent intent = getIntent();//get the data passed to this activity
-        message = (EditText) findViewById(R.id.messageText);
-        message.setVisibility(View.GONE);
-        sendMsg = (Button) findViewById(R.id.sendButton);
-        sendMsg.setVisibility(View.GONE);
-
-        //String phoneNumber =
-
-        Uri itemImage = Uri.parse(intent.getStringExtra("image"));
-        ImageView image = (ImageView) findViewById(R.id.selectImage);
-        image.setImageURI(itemImage);
-
-        String itemTitle = intent.getStringExtra("title");
-        TextView name = (TextView) findViewById(R.id.selectTitle);
-        name.setText(itemTitle);
-
-        String itemPrice = intent.getStringExtra("price");
-        TextView price = (TextView) findViewById(R.id.selectPrice);
-        price.setText(itemPrice);
-
-        String itemKeywords = intent.getStringExtra("keywords");
-        TextView keywords = (TextView) findViewById(R.id.selectKeywords);
-        keywords.setText(itemKeywords);
-
-        String itemDescription = intent.getStringExtra("description");
-        TextView description = (TextView) findViewById(R.id.selectDescription);
-        description.setText(itemDescription);
-
-        Button callButton = (Button) findViewById(R.id.callButton);
-        final String phone = intent.getStringExtra("phone");
-        final Uri phoneNumber = Uri.parse("tel:" + phone);
-
-
-        callButton.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View v) {
-                try {
-                    Intent callIntent = new Intent(Intent.ACTION_CALL);
-                    callIntent.setData(phoneNumber);
-                    startActivity(callIntent);
-                } catch (ActivityNotFoundException activityException) {
-                    Log.e("Calling a Phone Number", "Call failed", activityException);
-                }
-            }
-        });
-
-        final Button textButton = (Button) findViewById(R.id.textButton);
-
-        textButton.setOnClickListener(new View.OnClickListener(){
-        public void onClick(View view) {
-
-            //get rid of text, show textbox and send
-            textButton.setVisibility(View.GONE);
-            message.setVisibility(View.VISIBLE);
-            sendMsg.setVisibility(View.VISIBLE);
-
-        }
-        });
-        sendMsg.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                String txtMsg = String.valueOf(message.getText());
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(phone, null, txtMsg, null, null);
-            }
-        });
-
-    }
-
-
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_display_item, menu);
-
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if(this.tailNo != 0){
+            //we have an item
+//            TextView tailNum = (TextView) findViewById(R.id.tail_no);
+//            tailNum.setText(this.tailNo);
+            new GetPlaneDetails().execute(new ApiConnector());
         }
 
-        return super.onOptionsItemSelected(item);
     }
 
-//    private class ContactListAdapter extends ArrayAdapter<Contact> { //Here's the list
-//        public ContactListAdapter(){
-//            super(DisplayItem.this, R.layout.listview_item, Contacts);
-//        }
-//
-//        @Override
-//        public View getView(int position, View view, ViewGroup parent){
-//            if(view == null)//what does this inflater do?
-//                view = getLayoutInflater().inflate(R.layout.activity_display_item, parent, false);
-//
-//            Contact currentContact = Contacts.get(position);
-//
-//            Intent mIntent = getIntent();
-//            TextView name = (TextView) view.findViewById(R.id.selectTitle);
-//            name.setText("LISTEN TO ME MANNNNNN");
-//            // name.setText(mIntent.getIntExtra("tempId", 0));
-//            TextView phone = (TextView) view.findViewById(R.id.selectPrice);
-//            phone.setText(currentContact.getPrice());
-//            TextView email = (TextView) view.findViewById(R.id.selectKeywords);
-//            email.setText(currentContact.getKeywords());
-//            TextView address = (TextView) view.findViewById(R.id.selectDescription);
-//            address.setText(currentContact.getDescription());
-//            ImageView ivContactImage = (ImageView) view.findViewById(R.id.selectImage);
-//            ivContactImage.setImageURI(currentContact.getImageURI());
-//
-//            return view;
-//        }
-//    }
+    private class GetPlaneDetails extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            //it is executed on Background thread
+
+            return params[0].GetPlaneDetails(tailNo);
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray jsonArray) {
+
+            try{
+                JSONObject plane = jsonArray.getJSONObject(0);
+                make.setText(plane.getString("make"));
+                model.setText(plane.getString("model"));
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+
+        }
+    }
+
 }

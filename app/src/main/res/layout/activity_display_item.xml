@@ -23,18 +23,18 @@
             android:measureWithLargestChild="false"
             android:nestedScrollingEnabled="false">
 
-            <ImageView
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:id="@+id/selectImage"
-                android:layout_gravity="top|center_horizontal" />
+            <!--<ImageView-->
+                <!--android:layout_width="200dp"-->
+                <!--android:layout_height="200dp"-->
+                <!--android:id="@+id/tail_no"-->
+                <!--android:layout_gravity="top|center_horizontal" />-->
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="Large Text"
-                android:id="@+id/selectTitle"
+                android:text=""
+                android:id="@+id/planeMake"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="10dp" />
 
@@ -42,64 +42,64 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Medium Text"
-                android:id="@+id/selectPrice"
+                android:text=""
+                android:id="@+id/planeModel"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="20dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Medium Text"
-                android:id="@+id/selectKeywords"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp" />
+            <!--<TextView-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textAppearance="?android:attr/textAppearanceMedium"-->
+                <!--android:text="Medium Text"-->
+                <!--android:id="@+id/selectKeywords"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:layout_marginTop="10dp" />-->
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Medium Text"
-                android:id="@+id/selectDescription"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp" />
+            <!--<TextView-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textAppearance="?android:attr/textAppearanceMedium"-->
+                <!--android:text="Medium Text"-->
+                <!--android:id="@+id/selectDescription"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:layout_marginTop="10dp" />-->
 
-            <Button
-                android:layout_width="300dp"
-                android:layout_height="50dp"
-                android:text="Call"
-                android:id="@+id/callButton"
-                android:layout_gravity="bottom|center_horizontal"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="false"
-                android:layout_alignParentStart="true"
-                android:layout_marginTop="50dp"
-                android:layout_marginBottom="10dp"
-                android:layout_alignParentRight="true" />
+            <!--<Button-->
+                <!--android:layout_width="300dp"-->
+                <!--android:layout_height="50dp"-->
+                <!--android:text="Call"-->
+                <!--android:id="@+id/callButton"-->
+                <!--android:layout_gravity="bottom|center_horizontal"-->
+                <!--android:layout_alignParentBottom="true"-->
+                <!--android:layout_alignParentLeft="false"-->
+                <!--android:layout_alignParentStart="true"-->
+                <!--android:layout_marginTop="50dp"-->
+                <!--android:layout_marginBottom="10dp"-->
+                <!--android:layout_alignParentRight="true" />-->
 
-            <Button
-                android:layout_width="300dp"
-                android:layout_height="50dp"
-                android:text="Text"
-                android:id="@+id/textButton"
-                android:layout_alignParentStart="false"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-                android:layout_gravity="bottom|center_horizontal" />
+            <!--<Button-->
+                <!--android:layout_width="300dp"-->
+                <!--android:layout_height="50dp"-->
+                <!--android:text="Text"-->
+                <!--android:id="@+id/textButton"-->
+                <!--android:layout_alignParentStart="false"-->
+                <!--android:layout_alignParentBottom="true"-->
+                <!--android:layout_alignParentRight="true"-->
+                <!--android:layout_gravity="bottom|center_horizontal" />-->
 
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/messageText"
-                android:hint="Enter Message Text" />
+            <!--<EditText-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:id="@+id/messageText"-->
+                <!--android:hint="Enter Message Text" />-->
 
-            <Button
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SEND"
-                android:id="@+id/sendButton" />
+            <!--<Button-->
+                <!--style="?android:attr/buttonStyleSmall"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:text="SEND"-->
+                <!--android:id="@+id/sendButton" />-->
 
         </LinearLayout>
     </ScrollView>
