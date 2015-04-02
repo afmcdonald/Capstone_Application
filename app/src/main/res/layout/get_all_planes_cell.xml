@@ -14,14 +14,14 @@
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Tail Number"
-            android:id="@+id/tail_no"/>
+            android:text="Title"
+            android:id="@+id/title"/>
 
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="make"
-            android:id="@+id/make"
+            android:text="price"
+            android:id="@+id/price"
             android:layout_weight="1"/>
 
         </LinearLayout>

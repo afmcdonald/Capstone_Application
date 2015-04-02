@@ -2,14 +2,19 @@ package com.example.aidan.contactmanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,10 +32,16 @@ import android.widget.Toast;
 import android.net.Uri;
 
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,10 +68,17 @@ public class MainActivity extends ActionBarActivity {
     private JSONArray jsonArray;
 
     //putting these into adapter
+    String mPhoneNumber;
     String itemTitle;
     String itemPrice;
     String itemKeywords;
     String itemDescription;
+
+
+    private Button changeImageButton;
+    private static final int SELECT_PICTURE =1;
+    private ImageView picture;
+    //public List<NameValuePair> itemParams = new ArrayList<NameValuePair>();
 
 
 
@@ -72,6 +90,25 @@ public class MainActivity extends ActionBarActivity {
         postedItemListView = (ListView) findViewById(R.id.itemView);
         new GetAllItemsTask().execute(new ApiConnector());
 
+        //button to upload image?
+        this.picture = (ImageView) this.findViewById(R.id.pic);
+        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
+        this.changeImageButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
+
+            }
+        });
+
+
+
+
+
         this.postedItemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -81,9 +118,11 @@ public class MainActivity extends ActionBarActivity {
 
                     //send tail no
                     Intent showDetails = new Intent(getApplicationContext(), DisplayItem.class);
-                    showDetails.putExtra("TailNumber", itemClicked.getString("tail_no"));
-                    showDetails.putExtra("Make", itemClicked.getString("make"));
-                    showDetails.putExtra("Model", itemClicked.getString("model"));
+                    showDetails.putExtra("Title", itemClicked.getString("title"));
+                    showDetails.putExtra("Price", itemClicked.getString("price"));
+                    //showDetails.putExtra("Keywords", itemClicked.getString("keywords"));
+                    showDetails.putExtra("Phone", itemClicked.getString("phoneNo"));
+                    showDetails.putExtra("Description", itemClicked.getString("description"));
 
                     startActivity(showDetails);
 
@@ -93,6 +132,9 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+
+        TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        mPhoneNumber = tMgr.getLine1Number();
 
         title = (EditText) findViewById(R.id.itemTitle); //title of selling post
         price = (EditText) findViewById(R.id.itemPrice);
@@ -126,6 +168,15 @@ public class MainActivity extends ActionBarActivity {
                 itemPrice = String.valueOf(price.getText());
                 itemKeywords = String.valueOf(keywords.getText());
                 itemDescription = description.getText().toString();
+
+//                itemParams.add(new BasicNameValuePair("phone", mPhoneNumber));
+//                itemParams.add(new BasicNameValuePair("title", itemTitle));
+//                itemParams.add(new BasicNameValuePair("price", itemPrice));
+//                itemParams.add(new BasicNameValuePair("keywords", itemKeywords));
+//                itemParams.add(new BasicNameValuePair("description", itemDescription));
+//                itemParams.add(new BasicNameValuePair("location", "Issaquah"));
+
+
                 new InsertItemTask().execute(new ApiConnector());
 
 
@@ -141,7 +192,7 @@ public class MainActivity extends ActionBarActivity {
 
             }
         });
-  }
+    }
 //        title.addTextChangedListener(new TextWatcher() {
 //            @Override
 //            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -169,6 +220,72 @@ public class MainActivity extends ActionBarActivity {
 //            }
 //        });
 
+    //This deals with selecting picture from gallery
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode==RESULT_OK){
+            if(requestCode==SELECT_PICTURE){
+                Uri selectedImageUri = data.getData();
+                if(Build.VERSION.SDK_INT < 19){
+                    String selectedImagePath = getPath(selectedImageUri);
+                    Bitmap bitmap = BitmapFactory.decodeFile(selectedImagePath);
+                    SetImage(bitmap);
+                } else{
+                    ParcelFileDescriptor parcelFileDescriptor;
+                    try{
+                        parcelFileDescriptor = getContentResolver().openFileDescriptor(selectedImageUri, "r");
+                        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                        Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+                        parcelFileDescriptor.close();
+                        SetImage(image);
+                    } catch(FileNotFoundException e){
+                        e.printStackTrace();
+                    } catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    private void SetImage(Bitmap image){
+        this.picture.setImageBitmap(image);
+
+        //upload
+        String imageData = encodeTobase64(image);
+
+        final List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("image", imageData));
+    }
+
+    public static String encodeTobase64(Bitmap image){
+        System.gc();
+
+        if(image == null)return null;
+
+        Bitmap imagex = image;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+
+        byte[] b = baos.toByteArray();
+
+        String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+
+        return imageEncoded;
+    }
+
+    public String getPath(Uri uri){
+        if(uri==null){
+            return null;
+        }
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if(cursor != null){
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        }
+        return uri.getPath();
+    }
 
     public void setListAdapter(JSONArray jsonArray){
         this.jsonArray = jsonArray;
@@ -179,7 +296,8 @@ public class MainActivity extends ActionBarActivity {
     {
         @Override
         protected JSONArray doInBackground(ApiConnector... params) {
-            params[0].InsertItem("123-77-7777",itemTitle,itemPrice,itemKeywords,itemDescription,"ISSY");
+            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, "issaquah");
+           //params[0].InsertItem(itemParams);
             return null;
         }
     }
@@ -204,71 +322,5 @@ public class MainActivity extends ActionBarActivity {
 
 
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        getMenuInflater().inflate(R.menu.menu_main, menu);
-//        return true;
-//    }
-
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
-    //    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo){
-//        super.onCreateContextMenu(menu, view, menuInfo);
-//
-//        menu.setHeaderIcon(R.drawable.pencil_icon);
-//        menu.setHeaderTitle("Item Options");
-//        menu.add(Menu.NONE, VIEWITEM, menu.NONE, "View Item");
-//        menu.add(Menu.NONE, DELETE, menu.NONE, "Delete Item");
-//    }
-
-
-
-//    public boolean onContextItemSelected(MenuItem item){
-//        switch(item.getItemId()){
-//            case VIEWITEM:
-//                Item viewPostedItem = PostedItems.get(longClickedItemIndex);
-//
-//                String title = viewPostedItem.getTitle();
-//                String price = viewPostedItem.getPrice();
-//                String keywords = viewPostedItem.getKeywords();
-//                String description = viewPostedItem.getDescription();
-//
-//
-//                Intent intent = new Intent(this,DisplayItem.class);
-//                TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-//                String mPhoneNumber = tMgr.getLine1Number();
-//                intent.putExtra("image", image.toString());
-//                intent.putExtra("title", title);
-//                intent.putExtra("price", price);
-//                intent.putExtra("keywords", keywords);
-//                intent.putExtra("description", description);
-//                intent.putExtra("phone", mPhoneNumber);
-//
-//                startActivity(intent);
-//
-//                break;
-//            case DELETE:
-//                dbHandler.deleteContact(PostedItems.get(longClickedItemIndex));
-//                PostedItems.remove(longClickedItemIndex);
-//                contactAdapter.notifyDataSetChanged();
-//                break;
-//        }
-//
-//        return super.onContextItemSelected(item);
-//    }
 
 }

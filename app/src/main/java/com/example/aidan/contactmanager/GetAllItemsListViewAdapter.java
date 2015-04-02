@@ -58,8 +58,8 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
         if(convertView == null){
             convertView = layoutInflater.inflate(R.layout.get_all_planes_cell, null);
             cell = new ListCell();
-            cell.TailNo = (TextView) convertView.findViewById(R.id.tail_no);
-            cell.Make = (TextView) convertView.findViewById(R.id.make);
+            cell.Title = (TextView) convertView.findViewById(R.id.title);
+            cell.Price = (TextView) convertView.findViewById(R.id.price);
 
             cell.picture = (ImageView) convertView.findViewById(R.id.plane_pic);
 
@@ -72,8 +72,8 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
 
         try {
             JSONObject jsonObject = this.dataArray.getJSONObject(position);
-            cell.TailNo.setText(jsonObject.getString("title"));
-            cell.Make.setText(" "+jsonObject.getString("description"));
+            cell.Title.setText(jsonObject.getString("title"));
+            cell.Price.setText(" "+jsonObject.getString("price"));
 
             //photo here
             cell.picture.setImageResource(R.drawable.ic_launcher);
@@ -85,8 +85,8 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
     }
 
     private class ListCell{
-        private TextView TailNo;
-        private TextView Make;
+        private TextView Title;
+        private TextView Price;
 
         private ImageView picture;
     }
