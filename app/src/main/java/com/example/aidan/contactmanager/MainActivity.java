@@ -53,13 +53,13 @@ public class MainActivity extends ActionBarActivity {
     private static final int VIEWITEM = 0, DELETE = 1;
 
     EditText title, price, keywords, description,phone;
-    ImageView itemImage;
-    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
+//    ImageView itemImage;
+//    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
     ListView postedItemListView;
-    Uri imageUri = Uri.parse("android.resource://com.example.aidan.contactmanager/drawable/add_icon.png");
-    DatabaseHandler dbHandler;
-    int longClickedItemIndex;
-    ArrayAdapter<PostedItem> postedItemAdapter;
+//    Uri imageUri = Uri.parse("android.resource://com.example.aidan.contactmanager/drawable/add_icon.png");
+//    DatabaseHandler dbHandler;
+//    int longClickedItemIndex;
+//    ArrayAdapter<PostedItem> postedItemAdapter;
 
     Button upload;
     private static final int CAMERA_REQUEST = 1888;
@@ -73,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
     String itemPrice;
     String itemKeywords;
     String itemDescription;
+    String search;
 
 
     private Button changeImageButton;
@@ -159,6 +160,16 @@ public class MainActivity extends ActionBarActivity {
         tabSpec.setContent(R.id.buyTab);
         tabSpec.setIndicator("BUY");
         tabHost.addTab(tabSpec);
+
+        final Button searchBtn = (Button) findViewById(R.id.search);
+        searchBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) { //displays pop up with postedItem created
+
+
+                new SearchItemsTask().execute(new ApiConnector());
+            }
+        });
 
         final Button addBtn = (Button) findViewById(R.id.addItem);
         addBtn.setOnClickListener(new View.OnClickListener() {
@@ -289,7 +300,11 @@ public class MainActivity extends ActionBarActivity {
 
     public void setListAdapter(JSONArray jsonArray){
         this.jsonArray = jsonArray;
-        this.postedItemListView.setAdapter(new GetAllItemsListViewAdapter(jsonArray, this));
+
+        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
+
+        this.postedItemListView.setAdapter(temp);
+
     }
 
     private class InsertItemTask extends AsyncTask<ApiConnector, Long, JSONArray>
@@ -309,7 +324,26 @@ public class MainActivity extends ActionBarActivity {
         protected JSONArray doInBackground(ApiConnector... params) {
             //it is executed on Background thread
 
-           return params[0].GetAllItems();
+            return params[0].GetAllItems();
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray jsonArray) {
+
+            setListAdapter(jsonArray);
+
+
+
+        }
+    }
+
+    private class SearchItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            //it is executed on Background thread
+            search = "k";
+            return params[0].SearchItems(search);
         }
 
         @Override

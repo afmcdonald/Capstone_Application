@@ -57,7 +57,7 @@ public class DisplayItem extends ActionBarActivity {
     private ImageView picture;
 
     private String titleOfItem;
-    private static final String baseUrlForImage = "http://ec2-52-4-203-65.compute-1.amazonaws.com/images";
+    private static final String baseUrlForImage = "http://ec2-52-5-107-228.compute-1.amazonaws.com/images";
 
 
 

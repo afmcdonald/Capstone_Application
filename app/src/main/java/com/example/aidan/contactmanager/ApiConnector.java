@@ -24,9 +24,50 @@ import java.util.List;
  */
 public class ApiConnector {
 
+    public JSONArray SearchItems(String search){
+        String url =  "http://ec2-52-5-107-228.compute-1.amazonaws.com/searchTitleDescription.php?Search="+search;
+
+        //Get HttpResponse Object from url
+        //Get HttpEntitiy from Http response object
+
+        HttpEntity httpEntity = null;
+
+        try{
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(url);
+
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+
+            httpEntity = httpResponse.getEntity();
+        } catch(ClientProtocolException e){
+            e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+
+        //Convert HttpEntity into JSON Array
+        JSONArray jsonArray = null;
+
+        if (httpEntity != null){
+            try{
+                String entityResponse = EntityUtils.toString(httpEntity);
+                Log.e("Entity Response : ", entityResponse);
+
+                jsonArray = new JSONArray(entityResponse);
+            } catch(JSONException e){
+                e.printStackTrace();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        return jsonArray;
+    }
+
 
     public JSONArray GetAllItems(){
-        String url = "ec2-52-5-107-228.compute-1.amazonaws.com/getAllItems.php";
+        String url = "http://ec2-52-5-107-228.compute-1.amazonaws.com/getAllItems.php";
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -67,7 +108,7 @@ public class ApiConnector {
     }
 
     public JSONArray GetItemDetails(String phone, String description){
-        String url = "ec2-52-5-107-228.compute-1.amazonaws.com/getItemDetails.php?PhoneNumber="+phone+"&Description="+description;
+        String url = "http://ec2-52-5-107-228.compute-1.amazonaws.com/getItemDetails.php?PhoneNumber="+phone+"&Description="+description;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -138,7 +179,7 @@ public class ApiConnector {
 
     public void InsertItem(String phone, String title, String price, String keywords, String description, String location){
 
-        String url = "ec2-52-5-107-228.compute-1.amazonaws.com/createItem.php?Phone="+phone+"&Title="+title+"&Price="+price+"&Keywords="+keywords+"&Description="+description+"&Location="+location;
+        String url = "http://ec2-52-5-107-228.compute-1.amazonaws.com/createItem.php?Phone="+phone+"&Title="+title+"&Price="+price+"&Keywords="+keywords+"&Description="+description+"&Location="+location;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -165,7 +206,7 @@ public class ApiConnector {
     }
 
     public Boolean uploadImageToServer(List<NameValuePair> params){
-        String url = "ec2-52-5-107-228.compute-1.amazonaws.com/uploadImage.php";
+        String url = "http://ec2-52-5-107-228.compute-1.amazonaws.com/uploadImage.php";
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
