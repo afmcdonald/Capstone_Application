@@ -1,8 +1,10 @@
 package com.example.aidan.contactmanager;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -13,6 +15,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Base64;
 import android.view.ContextMenu;
@@ -20,12 +23,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,11 +47,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements SearchView.OnQueryTextListener {
 
     public final static String EXTRA_MESSAGE = "com.example.aidan.contactmanager.MESSAGE";
 
@@ -73,13 +79,21 @@ public class MainActivity extends ActionBarActivity {
     String itemPrice;
     String itemKeywords;
     String itemDescription;
+
     String search;
+    SearchView searchView;
+    private SearchView mSearchView;
+    private ListView mListView;
 
 
     private Button changeImageButton;
     private static final int SELECT_PICTURE =1;
     private ImageView picture;
-    //public List<NameValuePair> itemParams = new ArrayList<NameValuePair>();
+
+
+    private Button myProfileButton;
+
+
 
 
 
@@ -88,28 +102,53 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        mPhoneNumber = tMgr.getLine1Number();
+
+
+
+
+        //get to the customers personal page
+        this.myProfileButton = (Button) findViewById(R.id.myProfile);
+        this.myProfileButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(getApplicationContext(), MyProfile.class));
+            }
+
+        });
+
+
+
         postedItemListView = (ListView) findViewById(R.id.itemView);
         new GetAllItemsTask().execute(new ApiConnector());
 
         //button to upload image?
         this.picture = (ImageView) this.findViewById(R.id.pic);
-        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
-        this.changeImageButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
-
-            }
-        });
-
-
+//        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
+//        this.changeImageButton.setOnClickListener(new View.OnClickListener(){
+//            @Override
+//            public void onClick(View view){
+//                Intent intent = new Intent();
+//                intent.setType("image/*");
+//                intent.setAction(Intent.ACTION_GET_CONTENT);
+//
+//                startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
+//
+//            }
+//        });
 
 
+        mSearchView = (SearchView) findViewById(R.id.searchView);
+        InputMethodManager imm = (InputMethodManager)getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
 
+        setupSearchView();
+
+
+        //This goes to the specific page of the clicked item
         this.postedItemListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -117,13 +156,19 @@ public class MainActivity extends ActionBarActivity {
                     //get clicked item
                     JSONObject itemClicked = jsonArray.getJSONObject(position);
 
-                    //send tail no
+
                     Intent showDetails = new Intent(getApplicationContext(), DisplayItem.class);
-                    showDetails.putExtra("Title", itemClicked.getString("title"));
-                    showDetails.putExtra("Price", itemClicked.getString("price"));
-                    //showDetails.putExtra("Keywords", itemClicked.getString("keywords"));
+//                    showDetails.putExtra("Title", itemClicked.getString("title"));
+//                    showDetails.putExtra("Price", itemClicked.getString("price"));
+//                    //showDetails.putExtra("Keywords", itemClicked.getString("keywords"));
                     showDetails.putExtra("Phone", itemClicked.getString("phoneNo"));
-                    showDetails.putExtra("Description", itemClicked.getString("description"));
+//                    showDetails.putExtra("Description", itemClicked.getString("description"));
+                    showDetails.putExtra("Time", itemClicked.getString("time"));
+//                    Item item = new Item();
+//                    item.setPhoneNumber(itemClicked.getString("phoneNo"));
+//                    item.setTime((Timestamp)itemClicked.get("time"));
+                    //showDetails.putExtra("Item", item);
+
 
                     startActivity(showDetails);
 
@@ -134,8 +179,7 @@ public class MainActivity extends ActionBarActivity {
         });
 
 
-        TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        mPhoneNumber = tMgr.getLine1Number();
+
 
         title = (EditText) findViewById(R.id.itemTitle); //title of selling post
         price = (EditText) findViewById(R.id.itemPrice);
@@ -161,15 +205,7 @@ public class MainActivity extends ActionBarActivity {
         tabSpec.setIndicator("BUY");
         tabHost.addTab(tabSpec);
 
-        final Button searchBtn = (Button) findViewById(R.id.search);
-        searchBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) { //displays pop up with postedItem created
 
-
-                new SearchItemsTask().execute(new ApiConnector());
-            }
-        });
 
         final Button addBtn = (Button) findViewById(R.id.addItem);
         addBtn.setOnClickListener(new View.OnClickListener() {
@@ -230,6 +266,105 @@ public class MainActivity extends ActionBarActivity {
 //                startActivityForResult(Intent.createChooser(intent, "Select Item Image"), 1);
 //            }
 //        });
+
+    public void hideSoftKeyboard() {
+        if(getCurrentFocus()!=null) {
+            InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * Shows the soft keyboard
+     */
+    public void showSoftKeyboard(View view) {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        view.requestFocus();
+        inputMethodManager.showSoftInput(view, 0);
+    }
+
+    private void setupSearchView() {
+        mSearchView.setIconifiedByDefault(false);
+        mSearchView.setOnQueryTextListener(this);
+        mSearchView.setSubmitButtonEnabled(true);
+        mSearchView.setQueryHint("Search Here");
+    }
+
+    public boolean onQueryTextChange(String newText) {
+        if (TextUtils.isEmpty(newText)) {
+            System.out.println("ISEMPTY");
+        } else {
+            System.out.println("USELESS");
+        }
+        return true;
+    }
+
+    public boolean onQueryTextSubmit(String query) {
+        search = query;
+        new SearchItemsTask().execute(new ApiConnector());
+        return false;
+    }
+
+
+
+    //AsyncTasks for executing MySQL Queries
+
+    public void setListAdapter(JSONArray jsonArray){
+        this.jsonArray = jsonArray;
+
+        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
+
+        this.postedItemListView.setAdapter(temp);
+
+    }
+
+    private class InsertItemTask extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, "issaquah");
+           //params[0].InsertItem(itemParams);
+            return null;
+        }
+    }
+
+
+    private class GetAllItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            //it is executed on Background thread
+
+            return params[0].GetAllItems();
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray jsonArray) {
+
+            setListAdapter(jsonArray);
+
+
+
+        }
+    }
+
+    private class SearchItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            //it is executed on Background thread
+            //search = "k";
+            return params[0].SearchItems(search);
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray jsonArray) {
+
+            setListAdapter(jsonArray);
+
+        }
+    }
+
 
     //This deals with selecting picture from gallery
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -297,63 +432,6 @@ public class MainActivity extends ActionBarActivity {
         }
         return uri.getPath();
     }
-
-    public void setListAdapter(JSONArray jsonArray){
-        this.jsonArray = jsonArray;
-
-        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
-
-        this.postedItemListView.setAdapter(temp);
-
-    }
-
-    private class InsertItemTask extends AsyncTask<ApiConnector, Long, JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, "issaquah");
-           //params[0].InsertItem(itemParams);
-            return null;
-        }
-    }
-
-
-    private class GetAllItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-            //it is executed on Background thread
-
-            return params[0].GetAllItems();
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-
-            setListAdapter(jsonArray);
-
-
-
-        }
-    }
-
-    private class SearchItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
-    {
-        @Override
-        protected JSONArray doInBackground(ApiConnector... params) {
-            //it is executed on Background thread
-            search = "k";
-            return params[0].SearchItems(search);
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-
-            setListAdapter(jsonArray);
-
-        }
-    }
-
 
 
 

@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,8 +50,12 @@ public class DisplayItem extends ActionBarActivity {
     private TextView price;
     private TextView keywords;
     private TextView description;
+//
     private String phone;
-    private String itemDescription;
+    private String time;
+//    private String itemDescription;
+
+    //private Item myItem;
 
     private Button changeImageButton;
     private static final int SELECT_PICTURE =1;
@@ -67,8 +72,7 @@ public class DisplayItem extends ActionBarActivity {
         setContentView(R.layout.activity_display_item);
         Intent intent = getIntent();
         phone = intent.getStringExtra("Phone");
-        itemDescription = intent.getStringExtra("Description");
-
+        time = intent.getStringExtra("Time");
         //button to upload image?
         this.picture = (ImageView) this.findViewById(R.id.pic);
         this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
@@ -83,6 +87,7 @@ public class DisplayItem extends ActionBarActivity {
 
             }
         });
+
 
 
         this.title = (TextView) this.findViewById(R.id.title);
@@ -222,17 +227,20 @@ public class DisplayItem extends ActionBarActivity {
         protected JSONArray doInBackground(ApiConnector... params) {
             //it is executed on Background thread
 
-            return params[0].GetItemDetails(phone, itemDescription);
+            return params[0].GetItemDetails(phone, time);
         }
 
         @Override
         protected void onPostExecute(JSONArray jsonArray) {
 
             try{
+                System.out.println("######################################################################");
+
                 JSONObject item = jsonArray.getJSONObject(0);
+                System.out.println(item);
                 title.setText(item.getString("title"));
                 price.setText(item.getString("price"));
-                keywords.setText(item.getString("keywords"));
+                //keywords.setText(item.getString("keywords"));
                 description.setText(item.getString("description"));
 
                 String urlForImage = baseUrlForImage + item.getString("imageName");
@@ -240,6 +248,7 @@ public class DisplayItem extends ActionBarActivity {
                 titleOfItem = item.getString("title");
             }catch(Exception e){
                 e.printStackTrace();
+
             }
 
         }
