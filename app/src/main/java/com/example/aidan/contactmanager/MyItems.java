@@ -21,6 +21,8 @@ public class MyItems extends ActionBarActivity {
     private ListView myItemsListView;
     private JSONArray jsonArray;
     private String mPhoneNumber;
+    private String latitude;
+    private String longitude;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +34,7 @@ public class MyItems extends ActionBarActivity {
         //get MyItems
         myItemsListView = (ListView) findViewById(R.id.itemView);
         new GetAllItemsTask().execute(new ApiConnector());
+
 
         this.myItemsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -48,6 +51,10 @@ public class MyItems extends ActionBarActivity {
                     showDetails.putExtra("Phone", itemClicked.getString("phoneNo"));
 //                    showDetails.putExtra("Description", itemClicked.getString("description"));
                     showDetails.putExtra("Time", itemClicked.getString("time"));
+                    latitude = itemClicked.getString("latitude");
+                    longitude = itemClicked.getString("longitude");
+                    showDetails.putExtra("Latitude", itemClicked.getString("latitude"));
+                    showDetails.putExtra("Longitude", itemClicked.getString("longitude"));
 //                    Item item = new Item();
 //                    item.setPhoneNumber(itemClicked.getString("phoneNo"));
 //                    item.setTime((Timestamp)itemClicked.get("time"));
@@ -85,7 +92,7 @@ public class MyItems extends ActionBarActivity {
         this.jsonArray = jsonArray;
         System.out.println(jsonArray);
 
-        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
+        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this, latitude, longitude);
 
         this.myItemsListView.setAdapter(temp);
 

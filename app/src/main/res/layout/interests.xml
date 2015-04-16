@@ -3,14 +3,6 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="INTERESTS"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal" />
-
     <EditText
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -23,6 +15,26 @@
         android:layout_height="wrap_content"
         android:text="Add Interest"
         android:id="@+id/addInterest"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="MY INTERESTS"
+        android:id="@+id/textView"
+        android:layout_gravity="center_horizontal" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/myKeywordsView"
+        android:layout_gravity="center_horizontal" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/keywordView"
         android:layout_gravity="center_horizontal" />
 
 </LinearLayout>

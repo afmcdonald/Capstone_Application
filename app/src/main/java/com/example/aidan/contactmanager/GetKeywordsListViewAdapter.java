@@ -2,7 +2,6 @@ package com.example.aidan.contactmanager;
 
 import android.app.Activity;
 import android.content.Context;
-import android.location.Location;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,23 +17,18 @@ import org.w3c.dom.Text;
 /**
  * Created by Aidan on 3/31/2015.
  */
-public class GetAllItemsListViewAdapter extends BaseAdapter {
+public class GetKeywordsListViewAdapter extends BaseAdapter {
 
     private JSONArray dataArray;
     private Activity activity;
 
     private static LayoutInflater layoutInflater = null;
-    private String myLatitude;
-    private String myLongitude;
-    private float[] distance;
 
 
-    public GetAllItemsListViewAdapter(JSONArray jsonArray, Activity a, String latitude, String longitude){
+    public GetKeywordsListViewAdapter(JSONArray jsonArray, Activity a){
 
         this.dataArray = jsonArray;
         this.activity = a;
-        myLatitude = latitude;
-        myLongitude = longitude;
 
         layoutInflater = (LayoutInflater) this.activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
@@ -43,7 +37,12 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return this.dataArray.length();
+        if (this.dataArray != null) {
+            return this.dataArray.length();
+        }
+        else{
+            return 0;
+        }
     }
 
     @Override
@@ -62,13 +61,9 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
         ListCell cell;
         //set up convert view if it is null
         if(convertView == null){
-            convertView = layoutInflater.inflate(R.layout.get_all_planes_cell, null);
+            convertView = layoutInflater.inflate(R.layout.get_keywords_cell, null);
             cell = new ListCell();
-            cell.Title = (TextView) convertView.findViewById(R.id.title);
-            cell.Price = (TextView) convertView.findViewById(R.id.price);
-            cell.Distance = (TextView) convertView.findViewById(R.id.distance);
-            cell.picture = (ImageView) convertView.findViewById(R.id.plane_pic);
-
+            cell.Keyword = (TextView) convertView.findViewById(R.id.keyword);
             convertView.setTag(cell);
         }
         else{
@@ -78,13 +73,8 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
 
         try {
             JSONObject jsonObject = this.dataArray.getJSONObject(position);
-            cell.Title.setText(jsonObject.getString("title"));
-            cell.Price.setText(jsonObject.getString("price"));
-            distance = new float[3];
-            Location.distanceBetween(Double.parseDouble(myLatitude), Double.parseDouble(myLongitude), Double.parseDouble(jsonObject.getString("latitude")), Double.parseDouble(jsonObject.getString("longitude")), distance);
-            cell.Distance.setText(Double.toString(distance[0]));
-            //photo here
-            cell.picture.setImageResource(R.drawable.ic_launcher);
+            cell.Keyword.setText(jsonObject.getString("keyword"));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -93,10 +83,7 @@ public class GetAllItemsListViewAdapter extends BaseAdapter {
     }
 
     private class ListCell{
-        private TextView Title;
-        private TextView Price;
-        private TextView Distance;
+        private TextView Keyword;
 
-        private ImageView picture;
     }
 }

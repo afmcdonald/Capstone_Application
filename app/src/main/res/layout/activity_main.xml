@@ -98,6 +98,14 @@
                             android:hint="Keywords"
                             android:inputType="textAutoComplete" />
 
+                        <MultiAutoCompleteTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:hint="Keywords"
+                            android:id="@+id/autoText"
+                            android:layout_gravity="center_horizontal" />
+
                         <EditText
                             android:layout_width="fill_parent"
                             android:layout_height="200dp"

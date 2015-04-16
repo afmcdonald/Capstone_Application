@@ -54,6 +54,8 @@ public class EditItem extends ActionBarActivity {
     //
     private String phone;
     private String time;
+    private String latitude;
+    private String longitude;
 //    private String itemDescription;
 
     //private Item myItem;
@@ -73,6 +75,8 @@ public class EditItem extends ActionBarActivity {
         Intent intent = getIntent();
         phone = intent.getStringExtra("Phone");
         time = intent.getStringExtra("Time");
+        latitude = intent.getStringExtra("Latitude");
+        longitude = intent.getStringExtra("Longitude");
         //button to upload image?
 //        this.picture = (ImageView) this.findViewById(R.id.pic);
 //        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
@@ -160,7 +164,7 @@ public class EditItem extends ActionBarActivity {
         @Override
         protected JSONArray doInBackground(ApiConnector... params) {
 
-            params[0].InsertItem(phone,editTitle.getText().toString(), editPrice.getText().toString(), "KEYWORD", editDescription.getText().toString(), "issaquah");
+            params[0].InsertItem(phone,editTitle.getText().toString(), editPrice.getText().toString(), "KEYWORD", editDescription.getText().toString(), latitude, longitude);
             new DeleteItemTask().execute(new ApiConnector());
             //params[0].InsertItem(itemParams);
             return null;

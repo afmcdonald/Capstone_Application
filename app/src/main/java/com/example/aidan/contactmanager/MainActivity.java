@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -30,12 +31,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.SearchView;
 import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.net.Uri;
 
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -52,20 +58,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements SearchView.OnQueryTextListener {
+public class MainActivity extends ActionBarActivity implements SearchView.OnQueryTextListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public final static String EXTRA_MESSAGE = "com.example.aidan.contactmanager.MESSAGE";
 
     private static final int VIEWITEM = 0, DELETE = 1;
 
-    EditText title, price, keywords, description,phone;
-//    ImageView itemImage;
-//    List<PostedItem> PostedItems = new ArrayList<PostedItem>();
+    EditText title, price, keywords, description;
+
     ListView postedItemListView;
-//    Uri imageUri = Uri.parse("android.resource://com.example.aidan.contactmanager/drawable/add_icon.png");
-//    DatabaseHandler dbHandler;
-//    int longClickedItemIndex;
-//    ArrayAdapter<PostedItem> postedItemAdapter;
+
 
     Button upload;
     private static final int CAMERA_REQUEST = 1888;
@@ -80,10 +82,17 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     String itemKeywords;
     String itemDescription;
 
+    Button addBtn;
+
+
+
     String search;
     SearchView searchView;
     private SearchView mSearchView;
-    private ListView mListView;
+    private ListView keywordListView;
+    private String text = "";
+    private String[] str;
+    private ArrayAdapter<String> adp;
 
 
     private Button changeImageButton;
@@ -93,6 +102,13 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
     private Button myProfileButton;
 
+
+    private MultiAutoCompleteTextView autoText;
+
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    private String myLatitude;
+    private String myLongitude;
 
 
 
@@ -105,6 +121,12 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
         TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mPhoneNumber = tMgr.getLine1Number();
+
+
+
+        //location
+        buildGoogleApiClient();
+
 
 
 
@@ -158,16 +180,11 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
 
                     Intent showDetails = new Intent(getApplicationContext(), DisplayItem.class);
-//                    showDetails.putExtra("Title", itemClicked.getString("title"));
-//                    showDetails.putExtra("Price", itemClicked.getString("price"));
-//                    //showDetails.putExtra("Keywords", itemClicked.getString("keywords"));
+
                     showDetails.putExtra("Phone", itemClicked.getString("phoneNo"));
-//                    showDetails.putExtra("Description", itemClicked.getString("description"));
+
                     showDetails.putExtra("Time", itemClicked.getString("time"));
-//                    Item item = new Item();
-//                    item.setPhoneNumber(itemClicked.getString("phoneNo"));
-//                    item.setTime((Timestamp)itemClicked.get("time"));
-                    //showDetails.putExtra("Item", item);
+
 
 
                     startActivity(showDetails);
@@ -184,9 +201,53 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
         title = (EditText) findViewById(R.id.itemTitle); //title of selling post
         price = (EditText) findViewById(R.id.itemPrice);
         keywords = (EditText) findViewById(R.id.itemKeywords);
+        keywords.setVisibility(View.GONE);
         description = (EditText) findViewById(R.id.itemDescription);
+//        keywordListView = (ListView) findViewById(R.id.keywordListView);
+//        keywordListView.setVisibility(View.GONE);
        // itemImage = (ImageView) findViewById(R.id.addImage);
 
+
+
+        //autopopup keywords
+//        keywords.addTextChangedListener(new TextWatcher() {
+//            @Override
+//            public void afterTextChanged(Editable mEdit) {
+//                keywordListView.setVisibility(View.VISIBLE);
+//                text = mEdit.toString();
+//                new findKeywordTask().execute(new ApiConnector());
+//
+//
+//            }
+//
+//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+//            }
+//
+//            public void onTextChanged(CharSequence s, int start, int before, int count) {
+//            }
+//        });
+
+
+
+
+        autoText = (MultiAutoCompleteTextView) findViewById(R.id.autoText);
+        autoText.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+
+        autoText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable mEdit) {
+                text = mEdit.toString();
+                new findKeywordTask().execute(new ApiConnector());
+
+
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+        });
 
 
 
@@ -207,21 +268,15 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
 
 
-        final Button addBtn = (Button) findViewById(R.id.addItem);
+        addBtn = (Button) findViewById(R.id.addItem);
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) { //displays pop up with postedItem created
                 itemTitle = String.valueOf(title.getText());
                 itemPrice = String.valueOf(price.getText());
-                itemKeywords = String.valueOf(keywords.getText());
+                itemKeywords = autoText.getText().toString();
                 itemDescription = description.getText().toString();
 
-//                itemParams.add(new BasicNameValuePair("phone", mPhoneNumber));
-//                itemParams.add(new BasicNameValuePair("title", itemTitle));
-//                itemParams.add(new BasicNameValuePair("price", itemPrice));
-//                itemParams.add(new BasicNameValuePair("keywords", itemKeywords));
-//                itemParams.add(new BasicNameValuePair("description", itemDescription));
-//                itemParams.add(new BasicNameValuePair("location", "Issaquah"));
 
 
                 new InsertItemTask().execute(new ApiConnector());
@@ -266,6 +321,41 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 //                startActivityForResult(Intent.createChooser(intent, "Select Item Image"), 1);
 //            }
 //        });
+
+    //location stuff
+    protected synchronized void buildGoogleApiClient() {
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (mLastLocation != null) {
+            myLatitude = String.valueOf(mLastLocation.getLatitude());
+            myLongitude =  String.valueOf(mLastLocation.getLongitude());
+        }
+    }
+
+    @Override
+    protected void onStart() {
+
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+
+    }
+
 
     public void hideSoftKeyboard() {
         if(getCurrentFocus()!=null) {
@@ -312,9 +402,31 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     public void setListAdapter(JSONArray jsonArray){
         this.jsonArray = jsonArray;
 
-        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
+        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this, myLatitude, myLongitude);
 
         this.postedItemListView.setAdapter(temp);
+
+    }
+
+    public void setKeywordListAdapter(JSONArray jsonArray){
+        this.jsonArray = jsonArray;
+
+        if(keywords.getText().length()>0) {
+            GetKeywordsListViewAdapter temp = new GetKeywordsListViewAdapter(this.jsonArray, this);
+            keywordListView.setVisibility(View.VISIBLE);
+            this.keywordListView.setAdapter(temp);
+        }
+        else{
+            keywordListView.setVisibility(View.GONE);
+        }
+
+
+
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
 
@@ -322,12 +434,44 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     {
         @Override
         protected JSONArray doInBackground(ApiConnector... params) {
-            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, "issaquah");
+            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, myLatitude, myLongitude);
            //params[0].InsertItem(itemParams);
             return null;
         }
     }
 
+    private class findKeywordTask extends AsyncTask<ApiConnector, Long, JSONArray>
+    {
+        @Override
+        protected JSONArray doInBackground(ApiConnector... params) {
+            return params[0].FindKeyword(text);
+        }
+
+        @Override
+        protected void onPostExecute(JSONArray jsonArray) {
+
+
+            if (jsonArray != null) {
+                str = new String[jsonArray.length()];
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    try {
+
+
+                        str[i] = jsonArray.getJSONObject(i).getString("keyword");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            //cheekyaf way of setting the adapter
+            Context context = addBtn.getContext();
+            adp =new ArrayAdapter<String>(context , android.R.layout.simple_dropdown_item_1line,str);
+            autoText.setThreshold(1);
+            autoText.setAdapter(adp);
+
+        }
+    }
 
     private class GetAllItemsTask extends AsyncTask<ApiConnector, Long, JSONArray>
     {

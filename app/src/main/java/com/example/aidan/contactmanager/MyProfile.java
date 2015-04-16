@@ -85,7 +85,7 @@ public class MyProfile extends ActionBarActivity {
     public void setListAdapter(JSONArray jsonArray){
         this.jsonArray = jsonArray;
 
-        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this);
+        GetAllItemsListViewAdapter temp = new GetAllItemsListViewAdapter(this.jsonArray, this, "0.0", "0.0");
 
         this.myItemListView.setAdapter(temp);
 

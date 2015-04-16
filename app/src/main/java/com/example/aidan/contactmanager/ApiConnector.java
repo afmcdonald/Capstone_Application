@@ -24,9 +24,10 @@ import java.util.List;
  * Created by Aidan on 3/31/2015.
  */
 public class ApiConnector {
+    private String theUrl = "http://ec2-52-5-213-87.compute-1.amazonaws.com/";
 
     public JSONArray SearchItems(String search){
-        String url =  "http://ec2-52-5-173-189.compute-1.amazonaws.com/searchTitleDescription.php?Search="+search;
+        String url =  theUrl +"searchTitleDescription.php?Search="+search;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -68,7 +69,7 @@ public class ApiConnector {
 
 
     public JSONArray GetAllItems(){
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/getAllItems.php";
+        String url = theUrl +"getAllItems.php";
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -110,7 +111,7 @@ public class ApiConnector {
 
 
     public JSONArray GetMyItems(String phone){
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/getMyItems.php?Phone="+phone;
+        String url = theUrl +"getMyItems.php?Phone="+phone;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -151,7 +152,7 @@ public class ApiConnector {
     }
 
     public JSONArray GetLikedItems(String phone){
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/getLikedItems.php?Phone="+phone;
+        String url = theUrl +"getLikedItems.php?Phone="+phone;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -193,7 +194,7 @@ public class ApiConnector {
 
     public JSONArray GetItemDetails(String phone, String time){
         String finalTime = time.replace(" ", "%20");
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/getItemDetails.php?PhoneNumber="+phone+"&Time="+finalTime;
+        String url = theUrl + "getItemDetails.php?PhoneNumber="+phone+"&Time="+finalTime;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -235,12 +236,13 @@ public class ApiConnector {
 
 
 
-    public void InsertItem(String phone, String title, String price, String keywords, String description, String location){
+    public void InsertItem(String phone, String title, String price, String keywords, String description, String latitude, String longitude){
         title = title.replace(" ", "%20");
         price = price.replace(" ", "%20");
         description = description.replace(" ", "%20");
+        keywords = keywords.replace(", ", "%20");
 
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/createItem.php?Phone="+phone+"&Title="+title+"&Price="+price+"&Keywords="+keywords+"&Description="+description+"&Location="+location;
+        String url = theUrl + "createItem.php?Phone="+phone+"&Title="+title+"&Price="+price+"&Keywords="+keywords+"&Description="+description+"&Latitude="+latitude+"&Longitude="+longitude;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -261,14 +263,43 @@ public class ApiConnector {
         } catch(IOException e){
             e.printStackTrace();
         }
-
-
-//
     }
 
     public void InsertKeyword(String phone, String keyword){
 
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/createKeyword.php?Phone="+phone+"&Keyword="+keyword;
+        String url = theUrl+"createKeyword.php?Phone="+phone+"&Keyword="+keyword;
+
+        try{
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(url);
+
+            httpClient.execute(httpGet);
+        } catch(ClientProtocolException e){
+            e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void DeleteKeyword(String phone, String keyword){
+
+        String url = theUrl+"deleteKeyword.php?Phone="+phone+"&Keyword="+keyword;
+
+        try{
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(url);
+
+            httpClient.execute(httpGet);
+        } catch(ClientProtocolException e){
+            e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    public JSONArray FindKeyword(String searchKey){
+        String finalKey = searchKey.replace(", ", "%20");
+        String url =  theUrl +"searchKeyword.php?Search="+finalKey;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -279,11 +310,9 @@ public class ApiConnector {
             DefaultHttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(url);
 
-            //there is no response so i think...
-            httpClient.execute(httpGet);
-            //HttpResponse httpResponse = httpClient.execute(httpGet);
+            HttpResponse httpResponse = httpClient.execute(httpGet);
 
-            //httpEntity = httpResponse.getEntity();
+            httpEntity = httpResponse.getEntity();
         } catch(ClientProtocolException e){
             e.printStackTrace();
         } catch(IOException e){
@@ -291,12 +320,69 @@ public class ApiConnector {
         }
 
 
-//
+        //Convert HttpEntity into JSON Array
+        JSONArray jsonArray = null;
+
+        if (httpEntity != null){
+            try{
+                String entityResponse = EntityUtils.toString(httpEntity);
+                Log.e("Entity Response : ", entityResponse);
+
+                jsonArray = new JSONArray(entityResponse);
+            } catch(JSONException e){
+                e.printStackTrace();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        return jsonArray;
+    }
+
+    public JSONArray FindMyKeywords(String phone){
+        String url =  theUrl +"findMyKeywords.php?Phone="+phone;
+
+        //Get HttpResponse Object from url
+        //Get HttpEntitiy from Http response object
+
+        HttpEntity httpEntity = null;
+
+        try{
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(url);
+
+            HttpResponse httpResponse = httpClient.execute(httpGet);
+
+            httpEntity = httpResponse.getEntity();
+        } catch(ClientProtocolException e){
+            e.printStackTrace();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+
+
+        //Convert HttpEntity into JSON Array
+        JSONArray jsonArray = null;
+
+        if (httpEntity != null){
+            try{
+                String entityResponse = EntityUtils.toString(httpEntity);
+                Log.e("Entity Response : ", entityResponse);
+
+                jsonArray = new JSONArray(entityResponse);
+            } catch(JSONException e){
+                e.printStackTrace();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        return jsonArray;
     }
 
     public void DeleteItem(String phone, String time){
         String finalTime = time.replace(" ", "%20");
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/deleteItem.php?PhoneNumber="+phone+"&Time="+finalTime;
+        String url = theUrl +"deleteItem.php?PhoneNumber="+phone+"&Time="+finalTime;
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -323,7 +409,7 @@ public class ApiConnector {
     }
 
     public Boolean uploadImageToServer(List<NameValuePair> params){
-        String url = "http://ec2-52-5-173-189.compute-1.amazonaws.com/uploadImage.php";
+        String url = theUrl + "uploadImage.php";
 
         //Get HttpResponse Object from url
         //Get HttpEntitiy from Http response object
@@ -352,32 +438,5 @@ public class ApiConnector {
         return false;
     }
 
-    //    public void InsertItem(List<NameValuePair> params){
-//
-//        String url = "http://ec2-52-4-203-65.compute-1.amazonaws.com/postItem.php";
-//
-//        //Get HttpResponse Object from url
-//        //Get HttpEntitiy from Http response object
-//
-//        HttpEntity httpEntity = null;
-//
-//        try{
-//            DefaultHttpClient httpClient = new DefaultHttpClient();
-//
-//            HttpPost httpPost = new HttpPost(url);
-//            httpPost.setEntity(new UrlEncodedFormEntity(params));
-//            //there is no response so i think...
-//            httpClient.execute(httpPost);
-//            //HttpResponse httpResponse = httpClient.execute(httpGet);
-//
-//            //httpEntity = httpResponse.getEntity();
-//        } catch(ClientProtocolException e){
-//            e.printStackTrace();
-//        } catch(IOException e){
-//            e.printStackTrace();
-//        }
-//
-//
-////
-//    }
+
 }
