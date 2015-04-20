@@ -49,10 +49,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,8 +78,10 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
     ListView postedItemListView;
 
+    String theUrl = "http://ec2-52-5-97-249.compute-1.amazonaws.com/upload.php";
 
-    Button upload;
+
+
     private static final int CAMERA_REQUEST = 1888;
     private ImageView imageView;
 
@@ -95,9 +107,18 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     private ArrayAdapter<String> adp;
 
 
+    private Button uploadButton;
+    private Uri mImageCaptureUri = null;
     private Button changeImageButton;
+    private String encodedImage;
     private static final int SELECT_PICTURE =1;
     private ImageView picture;
+    private ImageView testByte;
+    private Uri selectedImageUri;
+    private URI imageURI;
+    private String selectedImagePath = "";
+    private String realImagePath = "";
+    private String imageName = null;
 
 
     private Button myProfileButton;
@@ -119,6 +140,7 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
 
 
+
         TelephonyManager tMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mPhoneNumber = tMgr.getLine1Number();
 
@@ -128,7 +150,17 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
         buildGoogleApiClient();
 
 
+        uploadButton = (Button) findViewById(R.id.upload);
+        uploadButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT,mImageCaptureUri);
 
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
+            }
+
+        });
 
 
         //get to the customers personal page
@@ -148,18 +180,26 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
         //button to upload image?
         this.picture = (ImageView) this.findViewById(R.id.pic);
-//        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
-//        this.changeImageButton.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View view){
-//                Intent intent = new Intent();
-//                intent.setType("image/*");
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-//
-//                startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
-//
-//            }
-//        });
+//        this.testByte = (ImageView) this.findViewById(R.id.testByte);
+//        this.testByte.setVisibility(View.GONE);
+        //this.picture.setImageResource(R.drawable.ic_launcher);
+
+
+
+
+        this.changeImageButton = (Button) this.findViewById(R.id.changeImage);
+        //encodedImage = "";
+        this.changeImageButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                System.out.println("Selecting picture.................");
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), SELECT_PICTURE);
+
+            }
+        });
 
 
         mSearchView = (SearchView) findViewById(R.id.searchView);
@@ -207,25 +247,6 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 //        keywordListView.setVisibility(View.GONE);
        // itemImage = (ImageView) findViewById(R.id.addImage);
 
-
-
-        //autopopup keywords
-//        keywords.addTextChangedListener(new TextWatcher() {
-//            @Override
-//            public void afterTextChanged(Editable mEdit) {
-//                keywordListView.setVisibility(View.VISIBLE);
-//                text = mEdit.toString();
-//                new findKeywordTask().execute(new ApiConnector());
-//
-//
-//            }
-//
-//            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//            }
-//
-//            public void onTextChanged(CharSequence s, int start, int before, int count) {
-//            }
-//        });
 
 
 
@@ -279,18 +300,12 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
 
 
-                new InsertItemTask().execute(new ApiConnector());
+                new InsertImageTask().execute(new ApiConnector());
 
 
-//                if(!postedItemExists(postedItem)) {
-//                    dbHandler.createPostedItem(postedItem);
-//                    PostedItems.add(postedItem);
-//                    postedItemAdapter.notifyDataSetChanged();
-//                    Toast.makeText(getApplicationContext(), String.valueOf(title.getText()) +" has been added to your PostedItems!", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-                //Toast.makeText(getApplicationContext(), String.valueOf(title.getText()) + " already exists. Please use a different name.", Toast.LENGTH_SHORT).show();
-                Toast.makeText(getApplicationContext(), "Added!!!", Toast.LENGTH_SHORT).show();
+
+
+              Toast.makeText(getApplicationContext(), "Added!!!", Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -357,22 +372,6 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     }
 
 
-    public void hideSoftKeyboard() {
-        if(getCurrentFocus()!=null) {
-            InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-        }
-    }
-
-    /**
-     * Shows the soft keyboard
-     */
-    public void showSoftKeyboard(View view) {
-        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        view.requestFocus();
-        inputMethodManager.showSoftInput(view, 0);
-    }
-
     private void setupSearchView() {
         mSearchView.setIconifiedByDefault(false);
         mSearchView.setOnQueryTextListener(this);
@@ -434,9 +433,31 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
     {
         @Override
         protected JSONArray doInBackground(ApiConnector... params) {
-            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, myLatitude, myLongitude);
+
+            params[0].InsertItem(mPhoneNumber,itemTitle,  itemPrice, itemKeywords, itemDescription, myLatitude, myLongitude, imageName);
            //params[0].InsertItem(itemParams);
             return null;
+        }
+    }
+
+
+    private class InsertImageTask extends AsyncTask<ApiConnector, Long, String>
+    {
+        @Override
+        protected String doInBackground(ApiConnector... params) {
+
+            return params[0].InsertImage(realImagePath);
+        }
+
+        @Override
+        protected void onPostExecute(String image) {
+            imageName = image;
+            System.out.println("#############################################");
+            System.out.println("image name passed to insertTask: " + imageName);
+            new InsertItemTask().execute(new ApiConnector());
+
+
+
         }
     }
 
@@ -512,14 +533,46 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
 
     //This deals with selecting picture from gallery
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        System.out.println("In OnActivityResult");
+        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            picture.setImageBitmap(photo);
+
+
+
+            // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+
+            Uri tempUri = getImageUri(MainActivity.this.getApplicationContext(), photo);
+            System.out.println("################################################");
+            // CALL THIS METHOD TO GET THE ACTUAL PATH
+            realImagePath = getRealPathFromURI(tempUri);
+            File finalFile = new File(getRealPathFromURI(tempUri));
+
+            System.out.println("??????????????????????");
+            System.out.println(finalFile.getAbsolutePath());
+            System.out.println(finalFile.getPath());
+            try {
+                System.out.println(finalFile.getCanonicalPath());
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+
+
+        }
         if(resultCode==RESULT_OK){
             if(requestCode==SELECT_PICTURE){
-                Uri selectedImageUri = data.getData();
+                selectedImageUri = data.getData();
                 if(Build.VERSION.SDK_INT < 19){
-                    String selectedImagePath = getPath(selectedImageUri);
+
+                    selectedImagePath = getPath(selectedImageUri);
+
                     Bitmap bitmap = BitmapFactory.decodeFile(selectedImagePath);
                     SetImage(bitmap);
                 } else{
+
+                    selectedImagePath = selectedImageUri.getPath();
+
                     ParcelFileDescriptor parcelFileDescriptor;
                     try{
                         parcelFileDescriptor = getContentResolver().openFileDescriptor(selectedImageUri, "r");
@@ -527,6 +580,9 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
                         Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
                         parcelFileDescriptor.close();
                         SetImage(image);
+
+
+
                     } catch(FileNotFoundException e){
                         e.printStackTrace();
                     } catch (IOException e){
@@ -535,6 +591,22 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
                 }
             }
         }
+    }
+
+
+    public Uri getImageUri(Context inContext, Bitmap inImage) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+        System.out.println("Path: " + path);
+        return Uri.parse(path);
+    }
+
+    public String getRealPathFromURI(Uri uri) {
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        cursor.moveToFirst();
+        int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+        return cursor.getString(idx);
     }
 
     private void SetImage(Bitmap image){
@@ -547,7 +619,7 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
         params.add(new BasicNameValuePair("image", imageData));
     }
 
-    public static String encodeTobase64(Bitmap image){
+    public String encodeTobase64(Bitmap image){
         System.gc();
 
         if(image == null)return null;
@@ -559,21 +631,30 @@ public class MainActivity extends ActionBarActivity implements SearchView.OnQuer
         byte[] b = baos.toByteArray();
 
         String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+        encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+
+
 
         return imageEncoded;
     }
 
     public String getPath(Uri uri){
+
         if(uri==null){
+            //System.out.println("Nul Uri in getPath)");
             return null;
+
         }
+
         String[] projection = {MediaStore.Images.Media.DATA};
         Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
         if(cursor != null){
+
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
             return cursor.getString(column_index);
         }
+       //System.out.println("Null cursor in getPath)");
         return uri.getPath();
     }
 

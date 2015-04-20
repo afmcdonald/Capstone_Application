@@ -164,7 +164,7 @@ public class EditItem extends ActionBarActivity {
         @Override
         protected JSONArray doInBackground(ApiConnector... params) {
 
-            params[0].InsertItem(phone,editTitle.getText().toString(), editPrice.getText().toString(), "KEYWORD", editDescription.getText().toString(), latitude, longitude);
+            params[0].InsertItem(phone,editTitle.getText().toString(), editPrice.getText().toString(), "KEYWORD", editDescription.getText().toString(), latitude, longitude, "funEditString!Haven't updated Image");
             new DeleteItemTask().execute(new ApiConnector());
             //params[0].InsertItem(itemParams);
             return null;
